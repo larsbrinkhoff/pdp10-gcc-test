@@ -1,0 +1,33 @@
+	TITLE	negsi2.c
+	.DIRECTIVE	KL10
+
+DEFINE OWGBP (PS,Y)<	; one-word global byte pointer
+<PS>B5+Y*ONE>
+DEFINE GIW (Y)<Y*ONE>	; global indirect word
+	.PSECT .text/ronly
+gcc2.compiled:
+gnu.c:
+	.ENDPS
+	.PSECT .text/ronly
+	ENTRY	movn1
+movn1:
+	movn 1,2
+	popj 17,
+
+	ENTRY	movn2
+movn2:
+	movn 1,(2)
+	popj 17,
+
+	ENTRY	movnm
+movnm:
+	movnm 1,(2)
+	popj 17,
+
+	ENTRY	movns
+movns:
+	movns (1)
+	popj 17,
+
+	.ENDPS
+	END

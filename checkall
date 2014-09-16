@@ -1,0 +1,97 @@
+#!/bin/sh
+
+export CC="${CC:-../pdp10/gcc/cc1 -quiet -O2}"
+
+> check.log
+> results.log
+
+if test "$CPUS" = ""; then
+    CPUS="166 ka10 ki10 ks10 kl10 xkl1 xkl2";
+    export CPUS
+fi
+
+CPUS=`echo "$CPUS" | tr -s ' ' '\t'`
+
+if test $# != 0; then
+	echo "Testcase		$CPUS"
+    echo ''
+    for i in "$@"; do
+	./checkone "$i" 2>>results.log
+    done
+else
+    echo "Instruction		$CPUS"
+    echo ''
+    for i in insn/*.c; do
+	./checkone "$i" 2>>results.log
+    done
+    echo ''
+    echo "Pattern			$CPUS"
+    echo ''
+    for i in pattern/*.c; do
+	./checkone "$i" 2>>results.log
+    done
+    echo ''
+    echo "Miscellaneous		$CPUS"
+    echo ''
+    for i in misc/*.c; do
+	./checkone "$i" 2>>results.log
+    done
+fi
+
+eval `perl -e '
+  $ok166 = 0; $fail166 = 0; $error166 = 0;
+  $okka10 = 0; $failka10 = 0; $errorka10 = 0;
+  $okki10 = 0; $failki10 = 0; $errorki10 = 0;
+  $okks10 = 0; $failks10 = 0; $errorks10 = 0;
+  $okkl10 = 0; $failkl10 = 0; $errorkl10 = 0;
+  $okxkl1 = 0; $failxkl1 = 0; $errorxkl1 = 0;
+  $okxkl2 = 0; $failxkl2 = 0; $errorxkl2 = 0;
+  while (<>) {
+      if (/([a-z0-9]+):([a-z]+)/) {
+          $x = "$2$1";
+          ${$x}++;
+      }
+  }
+  print "ok166=$ok166 fail166=$fail166 error166=$error166\n";
+  print "okka10=$okka10 failka10=$failka10 errorka10=$errorka10\n";
+  print "okki10=$okki10 failki10=$failki10 errorki10=$errorki10\n";
+  print "okks10=$okks10 failks10=$failks10 errorks10=$errorks10\n";
+  print "okkl10=$okkl10 failkl10=$failkl10 errorkl10=$errorkl10\n";
+  print "okxkl1=$okxkl1 failxkl1=$failxkl1 errorxkl1=$errorxkl1\n";
+  print "okxkl2=$okxkl2 failxkl2=$failxkl2 errorxkl2=$errorxkl2\n";
+  ' < results.log`
+
+ok=$[$ok166 + $okka10 + $okki10 + $okks10 + $okkl10 + $okxkl1 + $okxkl2]
+fail=$[$fail166 + $failka10 + $failki10 + $failks10 + $failkl10 + $failxkl1 + $failxkl2]
+error=$[$error166 + $errorka10 + $errorki10 + $errorks10 + $errorkl10 + $errorxkl1 + $errorxkl2]
+
+echo ''
+printf '%-10s %5s %5s %5s\n' '' Pass Fail Error
+case "$CPUS" in *166*)
+    printf '%-10s %5s %5s %5s\n' '166' $ok166 $fail166 $error166;;
+esac
+case "$CPUS" in *ka10*)
+    printf '%-10s %5s %5s %5s\n' 'KA10' $okka10 $failka10 $errorka10;;
+esac
+case "$CPUS" in *ki10*)
+    printf '%-10s %5s %5s %5s\n' 'KI10' $okki10 $failki10 $errorki10;;
+esac
+case "$CPUS" in *ks10*)
+    printf '%-10s %5s %5s %5s\n' 'KS10' $okks10 $failks10 $errorks10;;
+esac
+case "$CPUS" in *kl10*)
+    printf '%-10s %5s %5s %5s\n' 'KL10' $okkl10 $failkl10 $errorkl10;;
+esac
+case "$CPUS" in *xkl1*)
+    printf '%-10s %5s %5s %5s\n' 'XKL-1' $okxkl1 $failxkl1 $errorxkl1;;
+esac
+case "$CPUS" in *xkl2*)
+    printf '%-10s %5s %5s %5s\n' 'XKL-2' $okxkl2 $failxkl2 $errorxkl2;;
+esac
+if echo $CPUS | tr '\t' ' ' | grep ' ' >/dev/null; then
+    printf '%-10s %5s %5s %5s\n' Total $ok $fail $error
+fi
+
+rm -f results.log
+
+exit 0

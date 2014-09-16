@@ -1,0 +1,49 @@
+#!/bin/sh
+
+flags ()
+{
+    grep '^/\* flag: [^ ]* \*/$' "$1" |
+	sed -e 's%^/\* flag: %%' -e 's% \*/$%%'
+}
+
+compare ()
+{
+    if diff -u "$1" "$2" | grep '^+[^+]' >/dev/null 2>&1; then
+	return 1;
+    else
+	return 0;
+    fi
+}
+
+if test "$CPUS" = ""; then
+    CPUS="166 ka10 ki10 ks10 kl10 xkl1 xkl2";
+fi
+
+ok=0
+fail=0
+error=0
+
+i="$1"
+name=`basename "$i" .c`
+printf '%-24s' "$name"
+for cpu in $CPUS; do
+    if test -r "$cpu/$name.s"; then
+	if $CC -I. -mcpu=$cpu `flags "$i"` "$i" -o tmp.s >>check.log 2>&1; then
+	    if compare tmp.s "$cpu/$name.s"; then
+		echo -n 'ok	'
+		echo 1>&2 "$cpu:ok"
+	    else
+		echo -n 'FAIL	'
+		echo 1>&2 "$cpu:fail"
+		diff -u tmp.s "$cpu/$name.s" >>check.log 2>/dev/null
+	    fi
+	else
+	    echo -n 'ERROR	'
+	    echo 1>&2 "$cpu:error"
+	fi
+	rm -f tmp.s
+    else
+	echo -n 'n/a	'
+    fi
+done
+echo ''

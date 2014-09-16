@@ -1,0 +1,17 @@
+#!/usr/bin/perl -w
+
+$x = "";
+
+while (<>)
+{
+    if (/^FAIL:/ || /^XPASS:/)
+    {
+	print $x;
+	print "-" x 70 . "\n\n";
+        $x = "";
+    }
+
+    $x = "" if (/^Executing/);
+
+    $x .= $_;
+}
